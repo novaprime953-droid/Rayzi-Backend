@@ -31,7 +31,16 @@ const LiveStreamingHistory = require("./server/liveStreamingHistory/liveStreamin
 
 //FCM node
 var FCM = require("fcm-node");
-var fcm = new FCM(config.SERVER_KEY);
+var fcm;
+try {
+  fcm = new FCM(config.SERVER_KEY);
+} catch (error) {
+  console.log("FCM Notification error: ", error.message);
+}
+
+app.get("/", (req, res) => {
+  res.status(200).json({ status: true, message: "Lumora Backend is Running!" });
+});
 
 //admin route
 const AdminRoute = require("./server/admin/admin.route");
