@@ -20,6 +20,10 @@ module.exports = {
   // firebase server key for notification
   SERVER_KEY: "YOUR_FIREBASE_SERVER_KEY_HERE",
 
+  // Agora Credentials
+  AGORA_APP_ID: "b873b1404b39498d9a4847e36c03e244",
+  AGORA_CERTIFICATE: "230bf067636745a483dedfffe0bf5637",
+
   // Mongodb Connection String
   MONGODB_CONNECTION_STRING: "mongodb+srv://novaprime953_db_user:j1L3zirhl8TnKdY1@cluster0.icfhait.mongodb.net/?appName=Cluster0"
 };
