@@ -12,7 +12,7 @@ module.exports = {
   //secret key for jwt
   JWT_SECRET: "Lumora_JWT_Token_Secret_2023",
 
-  SERVER_PATH: "http://localhost:5000",
+  SERVER_PATH: "https://rayzi-f1d2912b8f9f.herokuapp.com",
 
   // License Key / Purchase Code
   PURCHASE_CODE: "2026Rayzi",
