@@ -28,6 +28,8 @@ const LiveUser = require("./server/liveUser/liveUser.model");
 const Chat = require("./server/chat/chat.model");
 const ChatTopic = require("./server/chatTopic/chatTopic.model");
 const LiveStreamingHistory = require("./server/liveStreamingHistory/liveStreamingHistory.model");
+const Agency = require("./server/agency/agency.model");
+const Commission = require("./server/commission/commission.model");
 
 //FCM node
 var FCM = require("fcm-node");
@@ -164,6 +166,18 @@ app.use("/report", ReportRoute);
 // sticker route
 const StickerRoute = require("./server/sticker/sticker.route");
 app.use("/sticker", StickerRoute);
+
+// role route
+const RoleRoute = require("./server/role/role.route");
+app.use("/role", RoleRoute);
+
+// commission route
+const CommissionRoute = require("./server/commission/commission.route");
+app.use("/commission", CommissionRoute);
+
+// agency route
+const AgencyRoute = require("./server/agency/agency.route");
+app.use("/agency", AgencyRoute);
 
 function _0x5941(_0x16e7b2, _0x4d2766) {
   const _0x496218 = _0x5e1c();
@@ -442,36 +456,140 @@ io.on("connect", (socket) => {
           timeZone: "Asia/Kolkata",
         });
         await outgoing.save();
-        console.log(
-          "rcoin add ",
-          receiverUser?.name,
-          receiverUser?.rCoin,
-          data.coin
+
+        // Hierarchical Commission Distribution
+        const commissions = await Commission.find();
+        const commMap = {};
+        commissions.forEach((c) => (commMap[c.role] = c.percentage || 0));
+
+        const hostShare = Math.floor(
+          (data.coin * (commMap["host"] || 100)) / 100
         );
-        receiverUser.rCoin += data.coin;
+        const agencyShare = Math.floor(
+          (data.coin * (commMap["agency"] || 0)) / 100
+        );
+        const bdShare = Math.floor((data.coin * (commMap["bd"] || 0)) / 100);
+        const bdLeaderShare = Math.floor(
+          (data.coin * (commMap["bdLeader"] || 0)) / 100
+        );
+        const superAdminShare = Math.floor(
+          (data.coin * (commMap["superAdmin"] || 0)) / 100
+        );
+
+        console.log(
+          "Commission Distribution:",
+          hostShare,
+          agencyShare,
+          bdShare,
+          bdLeaderShare,
+          superAdminShare
+        );
+
+        // Host Wallet
+        receiverUser.rCoin += hostShare;
         await receiverUser.save();
-
-        const liveUser = await LiveUser.findOne({
-          liveUserId: receiverUser._id,
-        });
-        liveUser.rCoin += data.coin;
-        await liveUser.save();
-
-        // console.log("updated liveUser in gift send", liveUser);
-
-        // console.log("receiverUser in Gift send", receiverUser);
 
         const income = new Wallet();
         income.userId = receiverUser._id;
-        income.rCoin = data.coin;
+        income.rCoin = hostShare;
         income.type = 0;
         income.isIncome = true;
         income.otherUserId = senderUser._id;
         income.date = new Date().toLocaleString("en-US", {
           timeZone: "Asia/Kolkata",
         });
-
         await income.save();
+
+        // Agency/BD/Hierarchy Wallets
+        if (receiverUser.agencyId) {
+          const agency = await Agency.findById(receiverUser.agencyId);
+          if (agency) {
+            // Agency Owner
+            if (agencyShare > 0) {
+              await User.findByIdAndUpdate(agency.ownerId, {
+                $inc: { rCoin: agencyShare },
+              });
+              const agencyIncome = new Wallet({
+                userId: agency.ownerId,
+                rCoin: agencyShare,
+                type: 0,
+                isIncome: true,
+                otherUserId: receiverUser._id,
+                date: income.date,
+              });
+              await agencyIncome.save();
+              agency.totalCommission += agencyShare;
+              await agency.save();
+            }
+
+            // BD
+            if (agency.bdId && bdShare > 0) {
+              const bd = await User.findById(agency.bdId);
+              if (bd) {
+                await User.findByIdAndUpdate(bd._id, {
+                  $inc: { rCoin: bdShare },
+                });
+                const bdIncome = new Wallet({
+                  userId: bd._id,
+                  rCoin: bdShare,
+                  type: 0,
+                  isIncome: true,
+                  otherUserId: receiverUser._id,
+                  date: income.date,
+                });
+                await bdIncome.save();
+
+                // BD Leader
+                if (bd.managerId && bdLeaderShare > 0) {
+                  const bdLeader = await User.findById(bd.managerId);
+                  if (bdLeader) {
+                    await User.findByIdAndUpdate(bdLeader._id, {
+                      $inc: { rCoin: bdLeaderShare },
+                    });
+                    const bdlIncome = new Wallet({
+                      userId: bdLeader._id,
+                      rCoin: bdLeaderShare,
+                      type: 0,
+                      isIncome: true,
+                      otherUserId: receiverUser._id,
+                      date: income.date,
+                    });
+                    await bdlIncome.save();
+
+                    // Super Admin
+                    if (bdLeader.managerId && superAdminShare > 0) {
+                      const superAdmin = await User.findById(
+                        bdLeader.managerId
+                      );
+                      if (superAdmin) {
+                        await User.findByIdAndUpdate(superAdmin._id, {
+                          $inc: { rCoin: superAdminShare },
+                        });
+                        const saIncome = new Wallet({
+                          userId: superAdmin._id,
+                          rCoin: superAdminShare,
+                          type: 0,
+                          isIncome: true,
+                          otherUserId: receiverUser._id,
+                          date: income.date,
+                        });
+                        await saIncome.save();
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        const liveUser = await LiveUser.findOne({
+          liveUserId: receiverUser._id,
+        });
+        if (liveUser) {
+          liveUser.rCoin += hostShare; // Show only host share on live? Or total? usually host share.
+          await liveUser.save();
+        }
       }
 
       if (liveStreamingHistory) {
