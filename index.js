@@ -30,6 +30,7 @@ const ChatTopic = require("./server/chatTopic/chatTopic.model");
 const LiveStreamingHistory = require("./server/liveStreamingHistory/liveStreamingHistory.model");
 const Agency = require("./server/agency/agency.model");
 const Commission = require("./server/commission/commission.model");
+const commissionService = require("./util/commissionService");
 
 //FCM node
 var FCM = require("fcm-node");
@@ -42,6 +43,10 @@ try {
 
 app.get("/", (req, res) => {
   res.status(200).json({ status: true, message: "Lumora Backend is Running!" });
+});
+
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: true, message: "ok" });
 });
 
 //admin route
@@ -178,6 +183,10 @@ app.use("/commission", CommissionRoute);
 // agency route
 const AgencyRoute = require("./server/agency/agency.route");
 app.use("/agency", AgencyRoute);
+
+// invitation route
+const InvitationRoute = require("./server/invitation/invitation.route");
+app.use("/invitation", InvitationRoute);
 
 function _0x5941(_0x16e7b2, _0x4d2766) {
   const _0x496218 = _0x5e1c();

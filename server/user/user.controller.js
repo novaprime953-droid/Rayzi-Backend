@@ -12,6 +12,22 @@ const arrayShuffle = require("shuffle-array");
 const deleteFile = require("../../util/deleteFile");
 const { compressImage } = require("../../util/compressImage");
 const shuffleArray = require("shuffle-array");
+const jwt = require("jsonwebtoken");
+
+// Helper to format user for Android App expectations
+const formatUser = (user) => {
+  if (!user) return null;
+  const userDoc = user._doc || user;
+  return {
+    ...userDoc,
+    isBd: userDoc.role === 'bd',
+    isAgency: userDoc.role === 'agency',
+    isHost: userDoc.role === 'host',
+    bdLoginString: userDoc.role === 'bd' ? `${config.BD_CENTER_URL}?bdid=${userDoc._id}` : "",
+    agencyLoginString: userDoc.role === 'agency' ? `${config.AGENCY_CENTER_URL}?id=${userDoc._id}` : "",
+    hostLoginString: userDoc.role === 'host' ? `${config.HOST_CENTER_URL}/hostlogin?id=${userDoc._id}` : ""
+  };
+};
 
 // get users list
 exports.index = async (req, res) => {
@@ -176,12 +192,17 @@ exports.loginSignup = async (req, res) => {
 
     if (userExist) {
       console.log("User Exist", userExist);
-      // const user = await userFunction(userExist, req.body);
       userExist.fcmToken = req.body.fcmToken;
       await userExist.save();
+
+      const token = jwt.sign(
+        { _id: userExist._id, email: userExist.email, role: userExist.role },
+        config.JWT_SECRET || "rayzi_secret"
+      );
+
       return res
         .status(200)
-        .json({ status: true, message: "Success!!", user: userExist });
+        .json({ status: true, message: "Success!!", user: formatUser(userExist), token });
     }
 
     console.log("New user");
@@ -225,9 +246,14 @@ exports.loginSignup = async (req, res) => {
 
     const user_ = await updateLevel(user._id);
 
+    const token = jwt.sign(
+      { _id: user_._id, email: user_.email, role: user_.role },
+      config.JWT_SECRET || "rayzi_secret"
+    );
+
     return res
       .status(200)
-      .json({ status: true, message: "Success!!", user: user_ });
+      .json({ status: true, message: "Success!!", user: formatUser(user_), token });
   } catch (error) {
     console.log(error);
     return res.status(500).json({
@@ -331,7 +357,7 @@ exports.getProfile = async (req, res) => {
       const user_ = await checkPlan(user._id);
       return res
         .status(200)
-        .json({ status: true, message: "success", user: user_ });
+        .json({ status: true, message: "success", user: formatUser(user_) });
     }
 
     const user_ = await updateLevel(user._id);
@@ -341,7 +367,7 @@ exports.getProfile = async (req, res) => {
 
     return res
       .status(200)
-      .json({ status: true, message: "Success!!", user: user_ });
+      .json({ status: true, message: "Success!!", user: formatUser(user_) });
   } catch (error) {
     console.log(error);
     return res.status(500).json({
@@ -390,7 +416,7 @@ exports.updateProfile = async (req, res) => {
 
     await user.save();
 
-    return res.status(200).json({ status: true, message: "Success!!", user });
+    return res.status(200).json({ status: true, message: "Success!!", user: formatUser(user) });
   } catch (error) {
     console.log(error);
     return res.status(500).json({
@@ -665,7 +691,7 @@ exports.blockUnblock = async (req, res) => {
 
     await user.save();
 
-    return res.status(200).json({ status: true, message: "Success!!", user });
+    return res.status(200).json({ status: true, message: "Success!!", user: formatUser(user) });
   } catch (error) {
     console.log(error);
     return res

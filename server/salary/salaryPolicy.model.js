@@ -3,12 +3,12 @@ const mongoose = require("mongoose");
 const salaryPolicySchema = new mongoose.Schema(
   {
     role: { type: String, enum: ['host', 'agency', 'bd', 'bdLeader'], required: true },
-    targetCoins: { type: Number, required: true },
-    salary: { type: Number, required: true },
-    commissionPercentage: { type: Number, default: 0 },
-    minHours: { type: Number, default: 0 },
+    target: { type: Number, default: 0 },
+    salary: { type: Number, default: 0 },
+    commission: { type: Number, default: 0 },
     period: { type: String, enum: ['daily', 'weekly', 'monthly'], default: 'monthly' },
-    status: { type: String, enum: ['active', 'inactive'], default: 'active' },
+    minRequirements: { type: String, default: "" },
+    status: { type: Boolean, default: true },
   },
   {
     timestamps: true,

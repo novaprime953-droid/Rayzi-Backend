@@ -69,10 +69,11 @@ const userSchema = new mongoose.Schema(
       date: { type: String, default: null },
     },
 
-    role: { type: String, enum: ['user', 'host', 'agency', 'bd', 'bdLeader', 'superAdmin', 'owner'], default: 'user' },
+    role: { type: String, enum: ['user', 'host', 'agency', 'bd', 'bdLeader', 'superAdmin', 'manager', 'official', 'coinSeller', 'owner'], default: 'user' },
     agencyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Agency', default: null },
     managerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null }, // Direct manager in hierarchy
     roleStatus: { type: String, enum: ['active', 'suspended'], default: 'active' },
+    roleSuspensionReason: { type: String, default: "" },
   },
   {
     timestamps: true,

@@ -25,6 +25,11 @@ module.exports = {
   AGORA_CERTIFICATE: "230bf067636745a483dedfffe0bf5637",
 
   // Mongodb Connection String
-  MONGODB_CONNECTION_STRING: "mongodb+srv://novaprime953_db_user:j1L3zirhl8TnKdY1@cluster0.icfhait.mongodb.net/?appName=Cluster0"
+  MONGODB_CONNECTION_STRING: "mongodb+srv://novaprime953_db_user:j1L3zirhl8TnKdY1@cluster0.icfhait.mongodb.net/?appName=Cluster0",
+
+  // Panel URLs for App Integration
+  AGENCY_CENTER_URL: "https://volapartyagency.codderlab.com/",
+  HOST_CENTER_URL: "https://volapartyhost.codderlab.com/",
+  BD_CENTER_URL: "https://volapartybd.codderlab.com/"
 };
 

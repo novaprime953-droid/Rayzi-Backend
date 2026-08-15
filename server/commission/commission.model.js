@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const commissionSchema = new mongoose.Schema(
   {
-    role: { type: String, enum: ['host', 'agency', 'bd', 'bdLeader', 'superAdmin'], required: true, unique: true },
+    role: { type: String, enum: ['host', 'agency', 'bd', 'bdLeader', 'superAdmin', 'manager', 'official', 'coinSeller'], required: true, unique: true },
     percentage: { type: Number, default: 0 },
   },
   {
